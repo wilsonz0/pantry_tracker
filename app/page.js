@@ -7,8 +7,12 @@ import { Box, Modal, Stack, TextField, Typography, Button } from "@mui/material"
 
 export default function Home() {
   const [inventory, setInventory] = useState([]);
-  const [open, setOpen] = useState(false);
+  const [openAddModal, setOpenAddModal] = useState(false);
+  const [openUpdateModal, setOpenUpdateModal] = useState(false);
+  
   const [itemName, setItemName] = useState("");
+  const [itemCount, setItemCount] = useState("");
+  const [toUpdateName, setToUpdateName] = useState("");
 
   const updateInventory = async () => {
     const snapshot = query(collection(firestore, "inventory"));
@@ -55,8 +59,23 @@ export default function Home() {
     await updateInventory();
   };
 
-  const handleOpen = () => setOpen(true);
-  const handleClose = () => setOpen(false);
+  const updateItem = async (item, newItem) => {
+    const docRef = doc(collection(firestore, "inventory"), item);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+      console.log(docSnap);
+      console.log(newItem);
+      await setDoc(docRef, newItem);
+    }
+
+    await updateInventory();
+  };
+
+  const handleOpenAddModal = () => setOpenAddModal(true);
+  const handleCloseAddModal = () => setOpenAddModal(false);
+  const handleOpenUpdateModal = (name) => {setToUpdateName(name); setOpenUpdateModal(true);}
+  const handleCloseUpdateModal = () => setOpenUpdateModal(false);
 
   useEffect(() => {
     updateInventory();
@@ -70,13 +89,11 @@ export default function Home() {
       flexDirection="column"
       justifyContent="center"
       alignItems="center"
-      gap={2}
-    >
-
+      gap={2}>
       {/* Modal: add item form */}
       <Modal
-        open={open}
-        onClose={handleClose}>
+        open={openAddModal}
+        onClose={handleCloseAddModal}>
         <Box
           position="absolute"
           top="50%"
@@ -96,7 +113,8 @@ export default function Home() {
           <Stack
             width="100%"
             direction="row"
-            spacing="2">
+            spacing="2"
+          >
             <TextField
               variant="outlined"
               fullWidth
@@ -104,27 +122,81 @@ export default function Home() {
               onChange={(e) => {
                 setItemName(e.target.value);
               }}></TextField>
+
             <Button
               variant="outlined"
               onClick={() => {
                 addItem(itemName);
                 setItemName("");
-                handleClose();
+                handleCloseAddModal();
               }}>
               Add
             </Button>
           </Stack>
         </Box>
       </Modal>
-      
+
+      <Modal
+        open={openUpdateModal}
+        onClose={handleCloseUpdateModal}>
+        <Box
+          position="absolute"
+          top="50%"
+          left="50%"
+          width={400}
+          bgcolor="white"
+          border="2px solid #000"
+          boxShadow={24}
+          p={4}
+          display="flex"
+          flexDirection="column"
+          gap={3}
+          sx={{
+            transform: "translate(-50%, -50%)",
+          }}>
+          <Typography variant="h6">Update Item</Typography>
+          <Stack
+            width="100%"
+            direction="row"
+            spacing="2"
+          >
+            <TextField
+              variant="outlined"
+              fullWidth
+              value={itemName}
+              onChange={(e) => {
+                setItemName(e.target.value);
+              }}></TextField>
+
+            <TextField
+              variant="outlined"
+              fullWidth
+              value={itemCount}
+              onChange={(e) => {
+                setItemCount(e.target.value);
+              }}></TextField>
+
+            <Button
+              variant="outlined"
+              onClick={() => {
+                updateItem(toUpdateName, {name: itemName, count: itemCount});
+                setItemName("");
+                setItemCount("");
+                handleCloseUpdateModal();
+              }}>
+              Update
+            </Button>
+          </Stack>
+        </Box>
+      </Modal>
 
       {/***** MAIN CONTENT *****/}
       <Typography variant="h1"> Pantry Tracker </Typography>
-      
+
       <Button
         variant="contained"
         onClick={() => {
-          handleOpen();
+          handleOpenAddModal();
         }}>
         Add New Item
       </Button>
@@ -135,16 +207,21 @@ export default function Home() {
           width="800px"
           height="100px"
           bgcolor="#ADD8E6"
-          display='flex'
+          display="flex"
           alignItems="center"
-          justifyContent="center"
-        >
-          <Typography variant="h2" color="#333">
+          justifyContent="center">
+          <Typography
+            variant="h2"
+            color="#333">
             Inventory Items
           </Typography>
         </Box>
 
-        <Stack width="800px" height="300px" spacing={2} overflow="auto">
+        <Stack
+          width="800px"
+          height="300px"
+          spacing={2}
+          overflow="auto">
           {inventory.map(({ name, count }) => {
             return (
               <Box
@@ -154,7 +231,7 @@ export default function Home() {
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
-                bgColor="#f0f0f0"
+                bgcolor="#f0f0f0"
                 padding={5}>
                 <Typography
                   variant="h3"
@@ -173,20 +250,28 @@ export default function Home() {
                 <Button
                   variant="contained"
                   onClick={() => {
+                    handleOpenUpdateModal(name);
+                  }}>
+                  update
+                </Button>
+
+                <Button
+                  variant="contained"
+                  onClick={() => {
                     addItem(name);
                   }}>
-                  Add
+                  +1
                 </Button>
-                
+
                 <Button
                   variant="contained"
                   onClick={() => {
                     removeItem(name);
                   }}>
-                  Remove
+                  -1
                 </Button>
               </Box>
-            )
+            );
           })}
         </Stack>
       </Box>
