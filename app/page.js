@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { firestore } from "@/firebase";
-import { doc, collection, deleteDoc, getDoc, getDocs, query, setDoc } from "firebase/firestore";
+import { doc, collection, deleteDoc, getDoc, getDocs, query, setDoc, addDoc } from "firebase/firestore";
 import { Box, Modal, Stack, TextField, Typography, Button } from "@mui/material";
 
 export default function Home() {
@@ -12,7 +12,7 @@ export default function Home() {
   
   const [itemName, setItemName] = useState("");
   const [itemCount, setItemCount] = useState("");
-  const [toUpdateName, setToUpdateName] = useState("");
+  const [toUpdateId, setToUpdateId] = useState("");
 
   const updateInventory = async () => {
     const snapshot = query(collection(firestore, "inventory"));
@@ -20,7 +20,8 @@ export default function Home() {
     const inventoryList = [];
     docs.forEach((doc) => {
       inventoryList.push({
-        name: doc.id,
+        id: doc.id,
+        name: doc.name,
         ...doc.data(),
       });
     });
@@ -28,22 +29,24 @@ export default function Home() {
     setInventory(inventoryList);
   };
 
-  const addItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
-    const docSnap = await getDoc(docRef);
-
-    if (docSnap.exists()) {
-      const { count } = docSnap.data();
-      await setDoc(docRef, { count: count + 1 });
-    } else {
-      await setDoc(docRef, { count: 1 });
-    }
-
+  const addItem = async (newName) => {
+    const docRef = await addDoc(collection(firestore, "inventory"), {name: newName, count: 1});
     await updateInventory();
   };
 
-  const removeItem = async (item) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
+  const plusOne = async (id) => {
+    const docRef = doc(collection(firestore, "inventory"), id);
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
+      const { count } = docSnap.data();
+      await setDoc(docRef, { ...docSnap.data(), count: count + 1 });
+    } 
+
+    await updateInventory();
+  }
+
+  const removeItem = async (id) => {
+    const docRef = doc(collection(firestore, "inventory"), id);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -52,15 +55,15 @@ export default function Home() {
       if (count === 1) {
         await deleteDoc(docRef);
       } else {
-        await setDoc(docRef, { count: count - 1 });
+        await setDoc(docRef, { ...docSnap.data(), count: count - 1 });
       }
     }
 
     await updateInventory();
   };
 
-  const updateItem = async (item, newItem) => {
-    const docRef = doc(collection(firestore, "inventory"), item);
+  const updateItem = async (id, newItem) => {
+    const docRef = doc(collection(firestore, "inventory"), id);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
@@ -74,7 +77,7 @@ export default function Home() {
 
   const handleOpenAddModal = () => setOpenAddModal(true);
   const handleCloseAddModal = () => setOpenAddModal(false);
-  const handleOpenUpdateModal = (name) => {setToUpdateName(name); setOpenUpdateModal(true);}
+  const handleOpenUpdateModal = (id) => {setToUpdateId(id); setOpenUpdateModal(true);}
   const handleCloseUpdateModal = () => setOpenUpdateModal(false);
 
   useEffect(() => {
@@ -180,7 +183,7 @@ export default function Home() {
             <Button
               variant="outlined"
               onClick={() => {
-                updateItem(toUpdateName, {name: itemName, count: itemCount});
+                updateItem(toUpdateId, {name: itemName, count: parseInt(itemCount)});
                 setItemName("");
                 setItemCount("");
                 handleCloseUpdateModal();
@@ -221,10 +224,10 @@ export default function Home() {
           height="400px"
           spacing={2}
           overflow="auto">
-          {inventory.map(({ name, count }) => {
+          {inventory.map(({ id, name, count }) => {
             return (
               <Box
-                key={name}
+                key={id}
                 width="100%"
                 minHeight="100px"
                 display="flex"
@@ -251,7 +254,7 @@ export default function Home() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      handleOpenUpdateModal(name);
+                      handleOpenUpdateModal(id);
                     }}>
                     update
                   </Button>
@@ -259,7 +262,7 @@ export default function Home() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      addItem(name);
+                      plusOne(id);
                     }}>
                     +1
                   </Button>
@@ -267,7 +270,7 @@ export default function Home() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      removeItem(name);
+                      removeItem(id);
                     }}>
                     -1
                   </Button>
