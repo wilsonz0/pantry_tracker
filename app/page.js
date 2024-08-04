@@ -7,12 +7,13 @@ import { Box, Modal, Stack, TextField, Typography, Button } from "@mui/material"
 
 export default function Home() {
   const [inventory, setInventory] = useState([]);
+  const [filteredInventory, setFilteredInventory] = useState([]);
   const [openAddModal, setOpenAddModal] = useState(false);
   const [openUpdateModal, setOpenUpdateModal] = useState(false);
   
   const [itemName, setItemName] = useState("");
   const [itemCount, setItemCount] = useState("");
-  const [toUpdateId, setToUpdateId] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
 
   const updateInventory = async () => {
     const snapshot = query(collection(firestore, "inventory"));
@@ -27,6 +28,12 @@ export default function Home() {
 
     setInventory(inventoryList);
   };
+
+  const searchAndReplace = async (searchName) => {
+    setFilteredInventory(inventory.filter((item) =>
+      item.name.toLowerCase().includes(searchName.toLowerCase())
+    ))
+  }
 
   const addItem = async (id) => { // id == name
     const docRef = doc(collection(firestore, "inventory"), id.toLowerCase());
@@ -79,6 +86,10 @@ export default function Home() {
   useEffect(() => {
     updateInventory();
   }, []);
+
+  useEffect(() => {
+    setFilteredInventory(inventory);
+  }, [inventory])
 
   return (
     <Box
@@ -197,27 +208,38 @@ export default function Home() {
       {/* Display Box */}
       <Box border="1px solid #333" width="90%">
         <Box
-          height="90px"
+          height="110px"
           bgcolor="#ADD8E6"
           display="flex"
           alignItems="center"
-          justifyContent="center">
+          justifyContent="center"
+          flexDirection='column'
+        >
           <Typography
-            variant="h2"
-            color="#333">
+            variant="h3"
+            color="#333"
+          >
             Inventory Items
           </Typography>
-        </Box>
 
-        <Box>
-
+          {/* Search Bar */}
+          <Box>
+            <TextField
+              variant="outlined"
+              sx={{ "& .MuiInputBase-input": { height: 15, padding: 1 } }}
+              value={searchQuery}
+              onChange={(e) => {
+                setSearchQuery(e.target.value);
+                searchAndReplace(e.target.value);
+              }}></TextField>
+          </Box>
         </Box>
 
         <Stack
           height="400px"
           spacing={2}
           overflow="auto">
-          {inventory.map(({ name, count }) => { // id == name
+          {filteredInventory.map(({ name, count }) => { // id == name
             return (
               <Box
                 key={name}
