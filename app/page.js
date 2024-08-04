@@ -195,7 +195,7 @@ export default function Home() {
       </Modal>
 
       {/***** MAIN CONTENT *****/}
-      <Typography variant="h1"> Pantry Tracker </Typography>
+      <Typography variant="h2" fontWeight={'fontWeightBold'}> Pantry Tracker </Typography>
 
       <Button
         variant="contained"
@@ -234,7 +234,9 @@ export default function Home() {
               }}></TextField>
           </Box>
         </Box>
+        
 
+        {/* Inventory List */}
         <Stack
           height="400px"
           spacing={2}
@@ -249,7 +251,7 @@ export default function Home() {
                 alignItems="center"
                 justifyContent="space-between"
                 bgcolor="#f0f0f0"
-                padding={5}
+                padding={4}
               >
                 <Typography
                   variant="h4"
