@@ -20,8 +20,7 @@ export default function Home() {
     const inventoryList = [];
     docs.forEach((doc) => {
       inventoryList.push({
-        id: doc.id,
-        name: doc.name,
+        name: doc.id,
         ...doc.data(),
       });
     });
@@ -29,18 +28,17 @@ export default function Home() {
     setInventory(inventoryList);
   };
 
-  const addItem = async (newName) => {
-    const docRef = await addDoc(collection(firestore, "inventory"), {name: newName, count: 1});
-    await updateInventory();
-  };
-
-  const plusOne = async (id) => {
-    const docRef = doc(collection(firestore, "inventory"), id);
+  const addItem = async (id) => { // id == name
+    const docRef = doc(collection(firestore, "inventory"), id.toLowerCase());
     const docSnap = await getDoc(docRef);
+
     if (docSnap.exists()) {
       const { count } = docSnap.data();
       await setDoc(docRef, { ...docSnap.data(), count: count + 1 });
     } 
+    else {
+      await setDoc(docRef, {count: 1})
+    }
 
     await updateInventory();
   }
@@ -62,14 +60,12 @@ export default function Home() {
     await updateInventory();
   };
 
-  const updateItem = async (id, newItem) => {
+  const updateItem = async (id, newCount) => {
     const docRef = doc(collection(firestore, "inventory"), id);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-      console.log(docSnap);
-      console.log(newItem);
-      await setDoc(docRef, newItem);
+      await setDoc(docRef, {count: newCount});
     }
 
     await updateInventory();
@@ -77,7 +73,7 @@ export default function Home() {
 
   const handleOpenAddModal = () => setOpenAddModal(true);
   const handleCloseAddModal = () => setOpenAddModal(false);
-  const handleOpenUpdateModal = (id) => {setToUpdateId(id); setOpenUpdateModal(true);}
+  const handleOpenUpdateModal = (name) => {setItemName(name); setOpenUpdateModal(true);}
   const handleCloseUpdateModal = () => setOpenUpdateModal(false);
 
   useEffect(() => {
@@ -114,6 +110,7 @@ export default function Home() {
             transform: "translate(-50%, -50%)",
           }}>
           <Typography variant="h6">Add Item</Typography>
+          <Typography variant="p" color="#a0a0a0">**Case-Insensitive**</Typography>
           <Stack
             width="100%"
             direction="row"
@@ -158,20 +155,12 @@ export default function Home() {
           sx={{
             transform: "translate(-50%, -50%)",
           }}>
-          <Typography variant="h6">Update Item</Typography>
+          <Typography variant="h6">Update Item Count</Typography>
           <Stack
             width="100%"
             direction="row"
             spacing="2"
           >
-            <TextField
-              variant="outlined"
-              fullWidth
-              value={itemName}
-              onChange={(e) => {
-                setItemName(e.target.value);
-              }}></TextField>
-
             <TextField
               variant="outlined"
               fullWidth
@@ -183,7 +172,7 @@ export default function Home() {
             <Button
               variant="outlined"
               onClick={() => {
-                updateItem(toUpdateId, {name: itemName, count: parseInt(itemCount)});
+                updateItem(itemName, parseInt(itemCount));
                 setItemName("");
                 setItemCount("");
                 handleCloseUpdateModal();
@@ -220,14 +209,18 @@ export default function Home() {
           </Typography>
         </Box>
 
+        <Box>
+
+        </Box>
+
         <Stack
           height="400px"
           spacing={2}
           overflow="auto">
-          {inventory.map(({ id, name, count }) => {
+          {inventory.map(({ name, count }) => { // id == name
             return (
               <Box
-                key={id}
+                key={name}
                 width="100%"
                 minHeight="100px"
                 display="flex"
@@ -254,7 +247,7 @@ export default function Home() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      handleOpenUpdateModal(id);
+                      handleOpenUpdateModal(name);
                     }}>
                     update
                   </Button>
@@ -262,7 +255,7 @@ export default function Home() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      plusOne(id);
+                      addItem(name);
                     }}>
                     +1
                   </Button>
@@ -270,7 +263,7 @@ export default function Home() {
                   <Button
                     variant="contained"
                     onClick={() => {
-                      removeItem(id);
+                      removeItem(name);
                     }}>
                     -1
                   </Button>
