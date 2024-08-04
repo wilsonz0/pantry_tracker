@@ -90,6 +90,7 @@ export default function Home() {
       justifyContent="center"
       alignItems="center"
       gap={2}>
+
       {/* Modal: add item form */}
       <Modal
         open={openAddModal}
@@ -202,10 +203,9 @@ export default function Home() {
       </Button>
 
       {/* Display Box */}
-      <Box border="1px solid #333">
+      <Box border="1px solid #333" width="90%">
         <Box
-          width="800px"
-          height="100px"
+          height="90px"
           bgcolor="#ADD8E6"
           display="flex"
           alignItems="center"
@@ -218,8 +218,7 @@ export default function Home() {
         </Box>
 
         <Stack
-          width="800px"
-          height="300px"
+          height="400px"
           spacing={2}
           overflow="auto">
           {inventory.map(({ name, count }) => {
@@ -227,49 +226,52 @@ export default function Home() {
               <Box
                 key={name}
                 width="100%"
-                minHeight="150px"
+                minHeight="100px"
                 display="flex"
                 alignItems="center"
                 justifyContent="space-between"
                 bgcolor="#f0f0f0"
-                padding={5}>
+                padding={5}
+              >
                 <Typography
-                  variant="h3"
+                  variant="h4"
                   color="#333"
                   textAlign="center">
                   {name}
                 </Typography>
 
                 <Typography
-                  variant="h3"
+                  variant="h4"
                   color="#333"
                   textAlign="center">
                   {count}
                 </Typography>
 
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    handleOpenUpdateModal(name);
-                  }}>
-                  update
-                </Button>
+                <Box width='41%' display='flex' flexDirection='row' justifyContent='space-between'>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      handleOpenUpdateModal(name);
+                    }}>
+                    update
+                  </Button>
 
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    addItem(name);
-                  }}>
-                  +1
-                </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      addItem(name);
+                    }}>
+                    +1
+                  </Button>
 
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    removeItem(name);
-                  }}>
-                  -1
-                </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      removeItem(name);
+                    }}>
+                    -1
+                  </Button>
+                </Box>
               </Box>
             );
           })}
